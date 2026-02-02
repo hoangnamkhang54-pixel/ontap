@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Ôn Thi Tổng Hợp</title>
+    <style>
+        :root {
+            --primary: #4CAF50; /* Màu VioEdu */
+            --secondary: #FF9800; /* Màu Violympic */
+            --accent: #2196F3; /* Màu IOE */
+            --bg: #f4f7f6;
+            --text: #333;
+        }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        h1, h2 { text-align: center; color: #2c3e50; }
+
+        /* Màn hình chọn nền tảng */
+        .platform-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 30px; }
+        .card { background: white; padding: 20px; border-radius: 15px; text-align: center; cursor: pointer; 
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s; border-bottom: 5px solid transparent; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.15); }
+        .card.active { border-color: var(--primary); background: #e8f5e9; }
+        .card h3 { margin: 10px 0; font-size: 1.1rem; }
+
+        /* Màn hình chọn môn */
+        #subject-screen { display: none; margin-top: 40px; }
+        .subject-list { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
+        .subject-btn { padding: 12px 25px; border: 2px solid #ddd; border-radius: 25px; background: white; cursor: pointer; font-weight: bold; }
+        .subject-btn.selected { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* Nút bắt đầu */
+        #start-btn { display: block; margin: 30px auto; padding: 15px 40px; font-size: 1.2rem; background: #2c3e50; color: white; border: none; border-radius: 30px; cursor: pointer; opacity: 0.5; pointer-events: none; }
+        #start-btn.ready { opacity: 1; pointer-events: auto; background: var(--secondary); }
+
+        /* Khu vực làm bài */
+        #quiz-screen { display: none; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .question-box { margin-bottom: 30px; padding: 15px; border-left: 5px solid var(--primary); background: #fafafa; }
+        .options { list-style: none; padding: 0; }
+        .options li { margin: 10px 0; padding: 10px; border: 1px solid #eee; border-radius: 8px; cursor: pointer; }
+        .options li:hover { background: #f0f0f0; }
+        .options li.chosen { background: #d1e7dd; border-color: #a3cfbb; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="platform-screen">
+        <h1>Chọn Nền Tảng Ôn Thi</h1>
+        <div class="platform-grid">
+            <div class="card" onclick="selectPlatform('VioEdu', this)"><h3>VioEdu</h3></div>
+            <div class="card" onclick="selectPlatform('Violympic', this)"><h3>Violympic</h3></div>
+            <div class="card" onclick="selectPlatform('Trạng Nguyên', this)"><h3>Trạng Nguyên</h3></div>
+            <div class="card" onclick="selectPlatform('IOE', this)"><h3>IOE</h3></div>
+            <div class="card" onclick="selectPlatform('Học Sinh Giỏi', this)"><h3>Học Sinh Giỏi</h3></div>
+        </div>
+    </div>
+
+    <div id="subject-screen">
+        <h2 id="platform-title">Đang chọn: ...</h2>
+        <p style="text-align: center;">Chọn tối đa 3 môn học để bắt đầu:</p>
+        <div class="subject-list">
+            <button class="subject-btn" onclick="toggleSubject('Toán', this)">Toán</button>
+            <button class="subject-btn" onclick="toggleSubject('Tiếng Việt', this)">Tiếng Việt</button>
+            <button class="subject-btn" onclick="toggleSubject('Tiếng Anh', this)">Tiếng Anh</button>
+            <button class="subject-btn" onclick="toggleSubject('Tự nhiên xã hội', this)">Tự nhiên xã hội</button>
+            <button class="subject-btn" onclick="toggleSubject('Khoa học', this)">Khoa học</button>
+        </div>
+        <button id="start-btn" onclick="startQuiz()">Bắt đầu ôn tập</button>
+    </div>
+
+    <div id="quiz-screen">
+        <button onclick="location.reload()" style="float: right;">Thoát</button>
+        <h2 id="quiz-heading">Nội dung ôn tập</h2>
+        <div id="questions-content">
+            </div>
+        <button onclick="finishQuiz()" id="submit-quiz-btn" style="width: 100%; padding: 15px; background: var(--primary); color:white; border:none; border-radius:10px; font-size:1.1rem; cursor:pointer;">Nộp bài & Xem kết quả</button>
+    </div>
+</div>
+
+<script>
+    let selectedPlatform = "";
+    let selectedSubjects = [];
+
+    // 1. Chọn nền tảng
+    function selectPlatform(name, element) {
+        selectedPlatform = name;
+        document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+        element.classList.add('active');
+        
+        document.getElementById('platform-title').innerText = "Nền tảng: " + name;
+        document.getElementById('subject-screen').style.display = 'block';
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    // 2. Chọn môn (Logic tối đa 3 môn)
+    function toggleSubject(subject, btn) {
+        if (selectedSubjects.includes(subject)) {
+            selectedSubjects = selectedSubjects.filter(s => s !== subject);
+            btn.classList.remove('selected');
+        } else {
+            if (selectedSubjects.length < 3) {
+                selectedSubjects.push(subject);
+                btn.classList.add('selected');
+            } else {
+                alert("Bạn chỉ được chọn tối đa 3 môn thi!");
+            }
+        }
+        
+        const startBtn = document.getElementById('start-btn');
+        if (selectedSubjects.length > 0) {
+            startBtn.classList.add('ready');
+        } else {
+            startBtn.classList.remove('ready');
+        }
+    }
+
+    // 3. Giả lập dữ liệu tổng hợp từ các nguồn (3-4 đề)
+    const database = [
+        { subject: "Toán", q: "Giá trị của biểu thức 125 x 4 là?", a: ["400", "500", "600", "450"], c: 1, source: "Violympic" },
+        { subject: "Tiếng Anh", q: "Which word is an animal?", a: ["Apple", "Cat", "Table", "Blue"], c: 1, source: "IOE" },
+        { subject: "Tiếng Việt", q: "Thành ngữ nào nói về lòng dũng cảm?", a: ["Gan vàng dạ sắt", "Ở hiền gặp lành", "Học đi đôi với hành"], c: 0, source: "Trạng Nguyên" },
+        { subject: "Toán", q: "Tìm x, biết x + 15 = 40", a: ["25", "35", "55", "15"], c: 0, source: "VioEdu" }
+    ];
+
+    function startQuiz() {
+        document.getElementById('platform-screen').classList.add('hidden');
+        document.getElementById('subject-screen').classList.add('hidden');
+        document.getElementById('quiz-screen').style.display = 'block';
+        
+        document.getElementById('quiz-heading').innerText = `Đang ôn: ${selectedPlatform} (${selectedSubjects.join(", ")})`;
+        
+        const content = document.getElementById('questions-content');
+        let html = "";
+        
+        // Lọc câu hỏi theo môn đã chọn
+        const filtered = database.filter(item => selectedSubjects.includes(item.subject));
+        
+        filtered.forEach((item, index) => {
+            html += `
+                <div class="question-box">
+                    <p><small style="color:blue">[Nguồn: ${item.source}]</small></p>
+                    <p><strong>Câu ${index+1}: ${item.q}</strong></p>
+                    <ul class="options">
+                        ${item.a.map((opt, i) => `<li onclick="pickAnswer(this, ${index}, ${i})">${opt}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        });
+        content.innerHTML = html || "<p>Chưa có dữ liệu cho các môn này, bạn hãy thử chọn môn khác.</p>";
+    }
+
+    function pickAnswer(el, qIdx, aIdx) {
+        const parent = el.parentElement;
+        parent.querySelectorAll('li').forEach(li => li.classList.remove('chosen'));
+        el.classList.add('chosen');
+    }
+
+    function finishQuiz() {
+        alert("Chúc mừng bạn đã hoàn thành bài ôn tập! Hệ thống đang chấm điểm...");
+        location.reload();
+    }
+</script>
+
+</body>
+</html>
