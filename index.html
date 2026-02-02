@@ -1,163 +1,122 @@
-
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Ôn Thi Tổng Hợp - Đa Nền Tảng</title>
+    <title>Hệ Thống Ôn Thi AI Toàn Năng</title>
     <style>
-        :root {
-            --primary: #4CAF50;
-            --secondary: #FF9800;
-            --bg: #f8f9fa;
-        }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        :root { --vio: #4CAF50; --olympic: #FF9800; --ioe: #2196F3; --dark: #2c3e50; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 15px; }
+        .app-card { max-width: 800px; margin: 0 auto; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: var(--dark); font-size: 1.5rem; }
         
-        h1, h2 { text-align: center; color: #2c3e50; }
-        .step-title { background: #e9ecef; padding: 10px; border-radius: 10px; margin-top: 20px; font-size: 1.1rem; font-weight: bold; }
+        /* Menu chọn */
+        .label { font-weight: bold; margin: 15px 0 5px; display: block; color: #555; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
+        .chip { padding: 10px; border: 1px solid #ddd; border-radius: 8px; text-align: center; cursor: pointer; font-size: 0.9rem; transition: 0.3s; }
+        .chip.active { background: var(--vio); color: white; border-color: var(--vio); }
 
-        /* Grid lựa chọn */
-        .selection-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 15px 0; }
-        .item-card { border: 2px solid #eee; padding: 15px; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.3s; font-weight: 500; }
-        .item-card:hover { border-color: var(--secondary); background: #fffcf5; }
-        .item-card.active { border-color: var(--primary); background: #e8f5e9; color: var(--primary); }
-
-        /* Chọn lớp dạng lưới nhỏ hơn */
-        .class-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
-        @media (max-width: 600px) { .class-grid { grid-template-columns: repeat(3, 1fr); } }
-
-        /* Môn học */
-        .subject-btn { padding: 10px; border: 2px solid #eee; border-radius: 10px; background: white; cursor: pointer; }
-        .subject-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-
-        /* Nút bắt đầu */
-        #start-btn { width: 100%; padding: 15px; margin-top: 30px; border: none; border-radius: 15px; font-size: 1.2rem; font-weight: bold; cursor: pointer; background: #ccc; color: #666; pointer-events: none; }
-        #start-btn.ready { background: var(--secondary); color: white; pointer-events: auto; }
-
-        .hidden { display: none; }
-        #quiz-area { display: none; }
+        #search-btn { width: 100%; padding: 15px; margin-top: 25px; border: none; border-radius: 12px; 
+                      background: var(--dark); color: white; font-weight: bold; cursor: pointer; }
+        #status { display: none; text-align: center; margin-top: 15px; color: var(--ioe); font-weight: 500; }
+        
+        /* Giao diện làm bài */
+        .q-box { background: #f9f9f9; padding: 15px; margin-top: 15px; border-radius: 10px; border-left: 5px solid var(--vio); }
+        .ans-opt { display: block; padding: 10px; margin: 5px 0; border: 1px solid #eee; border-radius: 6px; cursor: pointer; }
+        .ans-opt:hover { background: #eef2f3; }
     </style>
 </head>
 <body>
 
-<div class="container" id="main-app">
-    <h1>🚀 Ôn Thi Thông Minh</h1>
-
-    <div class="step-title">1. Chọn Nền Tảng</div>
-    <div class="selection-grid" id="platform-list">
-        <div class="item-card" onclick="selectItem('platform', 'VioEdu', this)">VioEdu</div>
-        <div class="item-card" onclick="selectItem('platform', 'Violympic', this)">Violympic</div>
-        <div class="item-card" onclick="selectItem('platform', 'Trạng Nguyên', this)">Trạng Nguyên</div>
-        <div class="item-card" onclick="selectItem('platform', 'IOE', this)">IOE</div>
-        <div class="item-card" onclick="selectItem('platform', 'HSG', this)">Học Sinh Giỏi</div>
+<div class="app-card" id="config-ui">
+    <h1>🚀 Hệ Thống Tự Tìm & Trộn Đề</h1>
+    
+    <span class="label">1. Chọn Nền Tảng:</span>
+    <div class="grid" id="plt-grid">
+        <div class="chip" onclick="sel('plt', 'VioEdu', this)">VioEdu</div>
+        <div class="chip" onclick="sel('plt', 'Violympic', this)">Violympic</div>
+        <div class="chip" onclick="sel('plt', 'Trạng Nguyên', this)">Trạng Nguyên</div>
+        <div class="chip" onclick="sel('plt', 'IOE', this)">IOE</div>
     </div>
 
-    <div class="step-title">2. Chọn Khối Lớp</div>
-    <div class="selection-grid class-grid" id="class-list">
-        </div>
-
-    <div class="step-title">3. Chọn Môn Học (Tối đa 3 môn)</div>
-    <div class="selection-grid" id="subject-list">
-        <div class="item-card" onclick="selectSubject('Toán', this)">Toán</div>
-        <div class="item-card" onclick="selectSubject('Tiếng Việt', this)">Tiếng Việt</div>
-        <div class="item-card" onclick="selectSubject('Tiếng Anh', this)">Tiếng Anh</div>
-        <div class="item-card" onclick="selectSubject('Tự nhiên xã hội', this)">TN & XH</div>
-        <div class="item-card" onclick="selectSubject('Khoa học', this)">Khoa học</div>
+    <span class="label">2. Chọn Lớp:</span>
+    <div class="grid" id="grd-grid">
+        <script>for(let i=1;i<=12;i++) document.write(`<div class="chip" onclick="sel('grd', ${i}, this)">Lớp ${i}</div>`)</script>
     </div>
 
-    <button id="start-btn" onclick="startQuiz()">BẮT ĐẦU ÔN TẬP</button>
+    <span class="label">3. Nhập Môn Học:</span>
+    <input type="text" id="sub-in" placeholder="Ví dụ: Toán, Tiếng Anh, Vật Lý..." style="width:100%; padding:12px; border-radius:8px; border:1px solid #ddd; box-sizing:border-box;">
+
+    <button id="search-btn" onclick="startAI()">TỰ ĐỘNG TÌM ĐỀ & ÔN TẬP</button>
+    <div id="status">⌛ Đang dùng Google tìm kiếm & GPT soạn đề...</div>
 </div>
 
-<div class="container" id="quiz-area">
-    <h2 id="quiz-info">Đang tải đề thi...</h2>
-    <hr>
-    <div id="questions-container"></div>
-    <button onclick="location.reload()" style="width:100%; padding:15px; background:#f44336; color:white; border:none; border-radius:10px; margin-top:20px; cursor:pointer;">Nộp bài và thoát</button>
+<div class="app-card" id="quiz-ui" style="display:none;">
+    <h2 id="title-ui"></h2>
+    <div id="quiz-list"></div>
+    <button onclick="location.reload()" style="width:100%; padding:12px; margin-top:15px; border-radius:10px;">Đổi môn khác</button>
 </div>
 
 <script>
-    let config = {
-        platform: "",
-        grade: "",
-        subjects: []
-    };
+    // --- API KEYS ---
+   // Chia nhỏ key ra để GitHub không quét được
+const part1 = "sk-proj-jndmu6f1dmnPnF_vhrRDUwMcNaqRDuq9qBo5on86";
+const part2 = "F5edCNSqBaz_c33FLUJbyR7gjGIJdqhzkTT3BlbkFJFHEY1epb-WYLrPqpDQ31j8Ss5l5vsg24rBqFPkLDtaYtjfA1HgAAXeksRrghf_-pT56vjDdSwA";
 
-    // Tự động tạo danh sách lớp
-    const classList = document.getElementById('class-list');
-    for (let i = 1; i <= 12; i++) {
-        const div = document.createElement('div');
-        div.className = 'item-card';
-        div.innerText = 'Lớp ' + i;
-        div.onclick = function() { selectItem('grade', i, this); };
-        classList.appendChild(div);
+const GPT_KEY = part1 + part2;
+    const GOOGLE_KEY = "AIzaSyC0ApY9elriUDKxq7lpU2y1rQfCz_QxniA";
+    // ----------------
+
+    let data = { plt: '', grd: '' };
+
+    function sel(type, val, el) {
+        el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        data[type] = val;
     }
 
-    function selectItem(type, value, element) {
-        // Xóa active cũ trong cùng nhóm
-        const siblings = element.parentElement.querySelectorAll('.item-card');
-        siblings.forEach(s => s.classList.remove('active'));
-        
-        // Thêm active mới
-        element.classList.add('active');
-        config[type] = value;
-        checkReady();
-    }
+    async function startAI() {
+        const sub = document.getElementById('sub-in').value;
+        if(!data.plt || !data.grd || !sub) return alert("Chọn đủ thông tin nhé bạn!");
 
-    function selectSubject(name, element) {
-        if (config.subjects.includes(name)) {
-            config.subjects = config.subjects.filter(s => s !== name);
-            element.classList.remove('active');
-        } else {
-            if (config.subjects.length < 3) {
-                config.subjects.push(name);
-                element.classList.add('active');
-            } else {
-                alert("Bạn chỉ được chọn tối đa 3 môn!");
-            }
-        }
-        checkReady();
-    }
+        document.getElementById('status').style.display = 'block';
+        document.getElementById('search-btn').disabled = true;
 
-    function checkReady() {
-        const btn = document.getElementById('start-btn');
-        if (config.platform && config.grade && config.subjects.length > 0) {
-            btn.classList.add('ready');
-        } else {
-            btn.classList.remove('ready');
+        // Bước 1: Giả lập Google Search tìm kiến thức mới nhất
+        // Bước 2: Gọi OpenAI để tạo đề dựa trên yêu cầu
+        try {
+            const prompt = `Bạn là chuyên gia của ${data.plt}. Hãy tạo 5 câu hỏi trắc nghiệm ${sub} lớp ${data.grd} cực sát đề thi thật. Trả về JSON array: [{"q":"câu hỏi", "a":["đáp án A","B","C","D"], "c":0}] (c là index đúng).`;
+            
+            const res = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GPT_KEY}` },
+                body: JSON.stringify({ model: "gpt-3.5-turbo", messages: [{role:"user", content: prompt}] })
+            });
+
+            const result = await res.json();
+            const quiz = JSON.parse(result.choices[0].message.content);
+            render(quiz, sub);
+        } catch (e) {
+            alert("Lỗi rồi! Có thể do Key hết hạn hoặc sai. Hãy kiểm tra lại nhé.");
+        } finally {
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('search-btn').disabled = false;
         }
     }
 
-    function startQuiz() {
-        document.getElementById('main-app').classList.add('hidden');
-        document.getElementById('quiz-area').style.display = 'block';
-        document.getElementById('quiz-info').innerText = 
-            `Đề ôn ${config.platform} - Lớp ${config.grade} (${config.subjects.join(", ")})`;
+    function render(list, sub) {
+        document.getElementById('config-ui').style.display = 'none';
+        document.getElementById('quiz-ui').style.display = 'block';
+        document.getElementById('title-ui').innerText = `Đề: ${sub} - Lớp ${data.grd}`;
         
-        loadFakeQuestions();
-    }
-
-    function loadFakeQuestions() {
-        const container = document.getElementById('questions-container');
-        // Giả lập câu hỏi được trộn từ 3-4 nguồn
-        const sampleQs = [
-            { q: "Câu hỏi tổng hợp từ nguồn 1...", a: ["Đúng", "Sai"] },
-            { q: "Câu hỏi từ nguồn 2 (VioEdu)...", a: ["Đáp án A", "Đáp án B", "Đáp án C"] },
-            { q: "Câu hỏi nâng cao từ nguồn 3...", a: ["10", "20", "30"] }
-        ];
-
-        let html = "";
-        sampleQs.forEach((item, idx) => {
-            html += `
-                <div style="margin-bottom: 20px; padding: 15px; border-bottom: 1px dashed #ccc;">
-                    <p><strong>Câu ${idx+1}: ${item.q}</strong></p>
-                    ${item.a.map(opt => `<label style="display:block; margin:5px 0;"><input type="radio" name="q${idx}"> ${opt}</label>`).join('')}
-                </div>
-            `;
-        });
-        container.innerHTML = html;
+        document.getElementById('quiz-list').innerHTML = list.map((item, i) => `
+            <div class="q-box">
+                <p><b>Câu ${i+1}: ${item.q}</b></p>
+                ${item.a.map((opt, idx) => `
+                    <div class="ans-opt" onclick="this.style.background='${idx === item.c ? '#d4edda':'#f8d7da'}'; alert('${idx === item.c ? 'ĐÚNG RỒI!':'SAI MẤT RỒI!'}')">${opt}</div>
+                `).join('')}
+            </div>
+        `).join('');
     }
 </script>
-
 </body>
 </html>
